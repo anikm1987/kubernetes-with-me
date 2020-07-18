@@ -8,7 +8,6 @@ RUN /bin/bash -c ' echo "deb https://dl.bintray.com/rundeck/rundeck-deb /" | sud
   curl "https://bintray.com/user/downloadSubjectPublicKey?username=bintray" > /tmp/bintray.gpg.key && \
   apt-key add - < /tmp/bintray.gpg.key'
 RUN /bin/bash -c 'apt-get update && apt-get install -y rundeck-cli'
-#USER rundeck
 COPY ./resources/resources.xml /home/rundeck/projects/resources.xml
 COPY ./resources/tokens.properties /home/rundeck/etc/tokens.properties
 COPY ./resources/Rundeck-Admins.aclpolicy /home/rundeck/etc/Rundeck-Admins.aclpolicy

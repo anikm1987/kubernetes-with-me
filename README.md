@@ -4,4 +4,7 @@
 
 ### Moving Rundeck to AKS - RundeckToAKS
  - preparation - running it in docker-compose
+ - containers with ssh enabled so that it can work as Rundeck worker
+
+ 
 
