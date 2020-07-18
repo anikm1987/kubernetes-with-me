@@ -1,0 +1,24 @@
+FROM azuresdk/azure-cli-python
+LABEL Maintainer="Aniket Mukherjee <mukherjee.aniket@gmail.com>" 
+
+USER root
+RUN /bin/bash -c 'apk update && apk add --no-cache sudo ca-certificates wget curl openssh openrc'
+
+RUN /bin/bash -c 'curl -LO https://storage.googleapis.com/kubernetes-release/release/v1.17.0/bin/linux/amd64/kubectl'
+RUN /bin/bash -c 'chmod +x kubectl;mv ./kubectl /usr/local/bin/kubectl'
+
+RUN /bin/bash -c "chmod a+x /usr/local/bin/* && \
+  ssh-keygen -A"
+RUN sed -i 's/PermitRootLogin prohibit-password/PermitRootLogin yes/' /etc/ssh/sshd_config
+RUN sed -i 's/ChallengeResponseAuthentication yes/ChallengeResponseAuthentication no/' /etc/ssh/sshd_config
+
+RUN adduser -S testadmin -G root
+RUN /bin/bash -c "echo 'testadmin ALL=(ALL) ALL' >> /etc/sudoers && echo 'testadmin:screencast' | chpasswd && \
+  chown -R testadmin /etc/ssh/"
+USER testadmin
+WORKDIR /home/testadmin
+RUN /bin/bash -c "ssh-keygen -A"
+
+EXPOSE 22
+
+CMD ["/usr/sbin/sshd", "-D", "-e"]

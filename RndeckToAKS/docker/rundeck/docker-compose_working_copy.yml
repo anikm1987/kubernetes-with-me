@@ -1,0 +1,41 @@
+# docker compose to attach volume and build using context and docker file name is Dockerfile.dev
+version: '3'
+services:
+  rundeck-dev:
+    build:
+      context: ./rundeck
+      dockerfile: Dockerfile.dev
+    environment:
+      RUNDECK_GRAILS_URL: http://localhost:4440
+      RUNDECK_SECURITY_HTTPHEADERS_PROVIDER_CSP_ENABLED: 'false'
+      RUNDECK_API_TOKENS_DURATION_MAX: 0
+      RUNDECK_TOKENS_FILE: '/home/rundeck/etc/tokens.properties'
+      RUNDECK_DATABASE_DRIVER: com.mysql.jdbc.Driver
+      RUNDECK_DATABASE_USERNAME: rundeck
+      RUNDECK_DATABASE_PASSWORD: rundeck
+      RUNDECK_DATABASE_URL: jdbc:mysql://mysql/rundeck?autoReconnect=true&useSSL=false
+    ports:
+      - '4440:4440'
+    volumes:
+      - ./rundeck/data:/home/rundeck/server/data
+  ubuntu-node:
+    build:
+      context: ./python-sshd
+      dockerfile: Dockerfile
+    ports:
+      - '2222:22'
+  mysql:
+    image: mysql:5.7
+    expose:
+      - 3306
+    environment:
+      - MYSQL_ROOT_PASSWORD=root
+      - MYSQL_DATABASE=rundeck
+      - MYSQL_USER=rundeck
+      - MYSQL_PASSWORD=rundeck
+    volumes:
+      - ./rundeck/dbdata:/var/lib/mysql
+
+volumes:
+  data:
+  dbdata:

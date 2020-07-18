@@ -1,0 +1,21 @@
+FROM rundeck/rundeck:3.1.2
+
+USER root
+
+RUN /bin/bash -c 'apt-get update && apt-get install -y vim wget jq sshpass ca-certificates curl apt-transport-https gnupg '
+# install rd cli for rundeck - apt-transport-https  required to be installed
+RUN /bin/bash -c ' echo "deb https://dl.bintray.com/rundeck/rundeck-deb /" | sudo tee -a /etc/apt/sources.list && \
+  curl "https://bintray.com/user/downloadSubjectPublicKey?username=bintray" > /tmp/bintray.gpg.key && \
+  apt-key add - < /tmp/bintray.gpg.key'
+RUN /bin/bash -c 'apt-get update && apt-get install -y rundeck-cli'
+#USER rundeck
+COPY ./resources/resources.xml /home/rundeck/projects/resources.xml
+COPY ./resources/tokens.properties /home/rundeck/etc/tokens.properties
+COPY ./resources/Rundeck-Admins.aclpolicy /home/rundeck/etc/Rundeck-Admins.aclpolicy
+COPY ./resources/Rundeck-Users.aclpolicy /home/rundeck/etc/Rundeck-Users.aclpolicy
+
+RUN /bin/bash -c 'chown rundeck:root /home/rundeck/etc/*.* && chown rundeck:root /home/rundeck/projects/resources.xml'
+RUN /bin/bash -c 'chmod 0775 /home/rundeck/etc/Rundeck-Admins.aclpolicy /home/rundeck/etc/Rundeck-Users.aclpolicy  /home/rundeck/etc/tokens.properties'
+
+USER rundeck
+

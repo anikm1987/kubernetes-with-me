@@ -1,0 +1,6 @@
+RndeckToAKS/docker/rundeck/resources/
+docker-compose-running-all-success.yml
+docker-compose_workingcopywithldap.yml
+Dockerfile_backup_workingcopy
+notes.txt
+
