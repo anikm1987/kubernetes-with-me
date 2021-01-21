@@ -17,6 +17,8 @@ Getting Started
   ```
   $ git clone https://github.com/anikm1987/kubernetes-with-me.git
   $ cd kubernetes-with-me/vue-hosting-aks/mydemoapp
+  
+  # If you forked my repository then please make necessary changes in the above url.
   ```
 
 2. Install the dependencies: Compiles and hot-reloads for development
@@ -74,10 +76,10 @@ Setting up the Azure Devops CI/CD pipeline
    For reference - [Create Project](https://docs.microsoft.com/en-us/azure/devops/organizations/projects/create-project?view=azure-devops&tabs=preview-page)
 
 2. Navigate to Project settings => Service connections, here we will create 4 service connections -
-    - Azure Service Connection to subscription.
+    - Azure service connection to subscription.
     - Github service connection.
-    - Azure container rgistry connection.
-    - Azure Kubernetes environment connection.
+    - Azure container registry connection.
+    - Azure kubernetes environment connection.
 
 3. TODO
     
