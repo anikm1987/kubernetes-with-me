@@ -6,5 +6,6 @@ notes.txt
 .adoci
 manifest
 nginx
+yarn.lock
 
 
