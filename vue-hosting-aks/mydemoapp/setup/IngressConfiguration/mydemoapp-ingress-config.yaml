@@ -1,0 +1,41 @@
+apiVersion: extensions/v1beta1
+kind: Ingress
+metadata:
+  name: mydemoapp-ingress
+  namespace: mydemoapp-namespace 
+  annotations:
+    kubernetes.io/ingress.class: nginx
+    nginx.ingress.kubernetes.io/use-regex: 'true'
+    nginx.ingress.kubernetes.io/enable-cors: "true"
+    nginx.ingress.kubernetes.io/cors-allow-methods: "PUT, GET, POST, OPTIONS"
+    nginx.ingress.kubernetes.io/cors-allow-origin: "*"
+    nginx.ingress.kubernetes.io/cors-allow-credentials: "true"
+spec:
+# This tls section is only required if TLS is to be enabled for the Ingress
+  tls:
+  - hosts:
+    - mydemo.app.com    
+    secretName: aks-ingress-tls
+  rules:
+  # below part are some samples if you have backend services deployed as well and you want to configure routing for them
+  # - host: mydemoapp.example.com
+  #   http:
+  #     paths:
+  #     - backend:
+  #         serviceName: flask-iac-service
+  #         servicePort: 5000
+  #       path: /api/?(.*)
+  # - host: mydemoapp.example.com
+  #   http:
+  #     paths:
+  #     - backend:
+  #         serviceName: db-service
+  #         servicePort: 8000
+  #       path: /?(.*)
+  - host: mydemo.app.com
+    http:
+      paths:
+      - backend:
+          serviceName: app-service
+          servicePort: 80
+        path: /?(.*)

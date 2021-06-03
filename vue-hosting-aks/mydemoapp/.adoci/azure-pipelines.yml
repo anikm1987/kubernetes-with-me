@@ -1,0 +1,152 @@
+# Azure pipeline 
+# Maintaner - Aniket Mukherjee
+# Inital draft vesrion for main branch
+trigger:
+  branches:
+    include:
+      - main
+pr:
+  branches:
+    include:
+      - '*'
+
+pool:
+  vmImage: 'Ubuntu-18.04'
+
+variables:
+  # variables can be better managed inside of variable groups in azure devops but for demonstration purpose keep it here.
+  - name: imageName
+    value: 'frontend/myapp'
+  - name: dockerRegistryServiceConnection
+    value: 'demo-registry-connection'
+  - name: containerRegistry
+    value: 'mydemoappacr.azurecr.io'
+  - name: imageRepository
+    value: 'frontend'
+  - name: major
+    value: 1
+  - name: minor
+    value: 0
+  - name: patch
+    value: 0
+  - name: containerVersion
+    value: PipelineVersion
+  - group: pipeline
+  - group: demo-env
+  - name: clusterName
+    value: 'devcluster'
+  - name: namespace
+    value: 'mydemoapp-namespace'
+  - name: imagePullSecret
+    value: 'demoacrsecret1'
+
+stages:
+# Versioning main branch builds
+- stage:
+  displayName: Build main Version
+  condition: eq(variables['Build.SourceBranch'], 'refs/heads/main')
+  jobs:
+  - job: Build_main_Version
+    steps:
+      - bash: |
+           echo "##vso[build.updatebuildnumber]$(major).$(minor).$(patch)"
+        name: SetmainBuildName
+# Versioning feature branch and PR builds
+- stage:
+  displayName: Build Branch Version
+  condition: ne(variables['Build.SourceBranch'], 'refs/heads/main')
+  jobs:
+  - job: Build_Branch_Version
+    variables:
+       prpatch: $[counter(variables['system.pullrequest.pullrequestid'], 0)]
+       brpatch: $[counter(variables['build.sourcebranchname'], 0)]
+    steps:
+      - bash: |
+           echo "##vso[build.updatebuildnumber]$(major).$(minor)-PullRequest.$(prpatch)"
+        condition: eq(variables['Build.Reason'], 'PullRequest')
+        name: SetPRBuildName
+      - bash: |
+           echo "##vso[build.updatebuildnumber]$(major).$(minor)-$(Build.SourceBranchName).$(brpatch)"
+        condition: ne(variables['Build.Reason'], 'PullRequest')
+        name: SetBranchBuildName
+    
+- stage: RunTest
+  displayName: 'Run tests on PR request'
+  condition: and(always(), eq(variables['Build.Reason'], 'PullRequest'))
+  jobs:
+  - job: runTests
+    displayName: 'PR validation job'
+    steps:
+      - script: |
+          yarn lint
+        displayName: Run tests
+
+- stage: Build
+  displayName: Build stage
+  condition: eq(variables['Build.SourceBranch'], 'refs/heads/main')
+  jobs:  
+  - job: Build
+    displayName: Build job
+    steps:
+      - script: |
+          cd vue-hosting-aks/mydemoapp/manifest
+          ls -latr
+          sed -i -e s/$(containerVersion)/$(Build.BuildNumber)/g  app-deployment-pipeline.yaml
+          cat app-deployment-pipeline.yaml
+        displayName: 'Change container version for manifest'
+
+      - task: Docker@2
+        displayName: Build and push image for demo app
+        inputs:
+          repository: $(imageName)
+          command: buildAndPush
+          dockerfile: vue-hosting-aks/mydemoapp/Dockerfile
+          containerRegistry: $(dockerRegistryServiceConnection)
+          tags: |
+            $(Build.BuildNumber)
+
+      - task: PublishPipelineArtifact@1
+        inputs:
+          artifactName: 'manifests'
+          path: 'vue-hosting-aks/mydemoapp/manifest'
+
+# Deploy Stage to AKS 
+- stage: Deploy
+  displayName: Deploy stage
+  dependsOn: Build
+  condition: and(succeeded('Build'), eq(variables['Build.SourceBranch'], 'refs/heads/main'))
+  jobs:
+  - deployment: Deploy
+    displayName: Deploy job
+    environment: $(clusterName).$(namespace)
+    strategy:
+      runOnce:
+        deploy:
+          steps:
+          - task: DownloadPipelineArtifact@2
+            inputs:
+              artifactName: 'manifests'
+              downloadPath: '$(System.ArtifactsDirectory)/manifests'
+
+          - task: KubernetesManifest@0
+            displayName: Create imagePullSecret
+            inputs:
+              action: createSecret
+              secretName: $(imagePullSecret)
+              namespace: $(namespace)
+              dockerRegistryEndpoint: $(dockerRegistryServiceConnection)
+              kubernetesServiceConnection: $(clusterName)
+              
+          - task: KubernetesManifest@0
+            displayName: Deploy to Kubernetes cluster
+            inputs:
+              action: deploy
+              namespace: $(namespace)
+              manifests: |
+                $(System.ArtifactsDirectory)/manifests/app-deployment-pipeline.yaml
+                $(System.ArtifactsDirectory)/manifests/app-service.yaml
+              imagePullSecrets: |
+                $(imagePullSecret)
+              containers: |
+                $(containerRegistry)/$(imageRepository):$(Build.BuildNumber)
+              kubernetesServiceConnection: $(clusterName)

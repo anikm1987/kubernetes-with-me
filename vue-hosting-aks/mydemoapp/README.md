@@ -57,17 +57,21 @@ docker run -p 8080:80 anikm1987/mydemoapp:1.0.0
 Setting up the Azure Devops CI/CD pipeline
 -----------------------
 
-#### Pre-requisites
+### Pre-requisites
 | Details                          |
 | ---------                        |
 | Azure Devops account to run the pipeline                 |
 | Azure cloud access      |
 | Azure Resource Group and Service Principal |
-| Azure Kubernetes Cluster and a namespace created inside |
-| Azure container registry created and accesible from Azure Kubernetes cluster |
+| Azure Kubernetes Cluster and a namespace created inside - [Reference](https://docs.microsoft.com/en-us/azure/aks/kubernetes-walkthrough-portal) |
+| Azure container registry created [Reference](https://docs.microsoft.com/en-us/azure/container-registry/container-registry-get-started-portal) and accesible from Azure Kubernetes cluster |
 | Azure Kubernetes cluster is accessible from Azure devops | 
 | Reference - [Azure Kubernetes Tutorial](https://docs.microsoft.com/en-us/azure/aks/tutorial-kubernetes-prepare-app) |
 
+
+### Configuring AKS ingress controller
+
+1. Please refer detail documentation and scripts kept inside of setup/IngressConfiguration - [Readme](./setup/IngressConfiguration/Readme.md)
 
 
 ### Service Connection requirement for pipeline
